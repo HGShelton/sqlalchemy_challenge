@@ -13,7 +13,7 @@ import numpy as np
 #################################################
 # Database Setup
 #################################################
-engine = create_engine("sqlite:///./Resources/hawaii.sqlite")
+engine = create_engine("sqlite:///Resources/hawaii.sqlite")
 
 # reflect an existing database into a new model
 Base = automap_base()
@@ -38,10 +38,10 @@ app = Flask(__name__)
 # Flask Routes
 #################################################
 @app.route("/")
-def welcome():
+def routes():
     """List all available routes."""
     return(
-        f"Available Routes:<br/>"
+        f"Available Routes:<br/><br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
@@ -97,7 +97,49 @@ def tobs():
     temp_stats = list(np.ravel(most_active_temps))
     return jsonify(temp_stats)
 
+@app.route("/api/v1.0/<start>")
+def temperature_start(start):
+    start_date = datetime.strptime(start, '%Y-%m-%d')
 
+    temperature_data = session.query(measurements.date, measurements.tobs).filter(measurements.date >= start_date).all()
+
+    temperatures = [data[1] for data in temperature_data]
+
+    min_temp = np.min(temperatures)
+    avg_temp = np.mean(temperatures)
+    max_temp = np.max(temperatures)
+
+    response = {
+        "start_date": start_date.strftime('%Y-%m-%d'),
+        "min_temperature": min_temp,
+        "avg_temperature": avg_temp,
+        "max_temperature": max_temp
+    }
+
+    return jsonify(response)
+
+@app.route("/api/v1.0/<start>/<end>")
+def temperature_start_end(start, end):
+    start_date = datetime.strptime(start, '%Y-%m-%d')
+    end_date = datetime.strptime(end, '%Y-%m-%d')
+
+    temperature_data = session.query(measurements.date, measurements.tobs).filter(measurements.date.between(start_date, end_date)).all()
+
+    temperatures = [data[1] for data in temperature_data]
+
+    min_temp = np.min(temperatures)
+    avg_temp = np.mean(temperatures)
+    max_temp = np.max(temperatures)
+
+    response = {
+        "start_date": start_date.strftime('%Y-%m-%d'),
+        "end_date": end_date.strftime('%Y-%m-%d'),
+        "min_temperature": min_temp,
+        "avg_temperature": avg_temp,
+        "max_temperature": max_temp
+    }
+
+    return jsonify(response)
 
 if __name__ == "__main__":
     app.run(debug=True) 
