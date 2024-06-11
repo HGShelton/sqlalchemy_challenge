@@ -88,6 +88,7 @@ def tobs():
          func.min(measurements.tobs),
          func.max(measurements.tobs),
          func.avg(measurements.tobs)]
+    
     most_active_temps = session.query(*temps).\
         filter(measurements.station == 'USC00519281').\
         group_by(measurements.station).\
@@ -99,27 +100,32 @@ def tobs():
 
 @app.route("/api/v1.0/<start>")
 def temperature_start(start):
+    # Determine the minimum temperature, the average temperature, and the maximum temperature for a specified start date
     start_date = datetime.strptime(start, '%Y-%m-%d')
 
     temperature_data = session.query(measurements.date, measurements.tobs).filter(measurements.date >= start_date).all()
 
+    # Xpert Learning Assistant was used to determine code error when entering temperature data into a listt - temperatures = [data[1] for data in temperature_data]
     temperatures = [data[1] for data in temperature_data]
 
     min_temp = np.min(temperatures)
     avg_temp = np.mean(temperatures)
     max_temp = np.max(temperatures)
 
-    response = {
+    # Xpert Learning Assistant was used to determine value for key:
+    temp_stats = {
         "start_date": start_date.strftime('%Y-%m-%d'),
         "min_temperature": min_temp,
         "avg_temperature": avg_temp,
         "max_temperature": max_temp
     }
 
-    return jsonify(response)
+    # Return a JSON list
+    return jsonify(temp_stats)
 
 @app.route("/api/v1.0/<start>/<end>")
 def temperature_start_end(start, end):
+    # Determine the minimum temperature, the average temperature, and the maximum temperature for a specified start-end range
     start_date = datetime.strptime(start, '%Y-%m-%d')
     end_date = datetime.strptime(end, '%Y-%m-%d')
 
@@ -131,7 +137,7 @@ def temperature_start_end(start, end):
     avg_temp = np.mean(temperatures)
     max_temp = np.max(temperatures)
 
-    response = {
+    temp_stats = {
         "start_date": start_date.strftime('%Y-%m-%d'),
         "end_date": end_date.strftime('%Y-%m-%d'),
         "min_temperature": min_temp,
@@ -139,7 +145,8 @@ def temperature_start_end(start, end):
         "max_temperature": max_temp
     }
 
-    return jsonify(response)
+    # Return a JSON list
+    return jsonify(temp_stats)
 
 if __name__ == "__main__":
     app.run(debug=True) 
